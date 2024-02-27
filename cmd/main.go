@@ -1,7 +1,10 @@
 package main
 
 import (
+	"context"
 	"os"
+	"os/signal"
+	"syscall"
 	todo "todo_app"
 	"todo_app/pkg/handler"
 	"todo_app/pkg/repository"
@@ -11,6 +14,17 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
+
+// @title Todo App API
+// @version 1.0
+// @description API Server for TodoList Application
+
+// @host localhost:8000
+// @BasePath /
+
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
 
 func main() {
 	if err := initConfig(); err != nil {
@@ -37,8 +51,24 @@ func main() {
 	handlers := handler.NewHandler(services)
 
 	srv := new(todo.Server)
-	if err := srv.Run(viper.GetString("port"), handlers.InitRoutes()); err != nil {
-		logrus.Fatalf("error uncured while running http server: %s", err.Error())
+	go func() {
+		if err := srv.Run(viper.GetString("port"), handlers.InitRoutes()); err != nil {
+			logrus.Fatalf("error uncured while running http server: %s", err.Error())
+		}
+	}()
+
+	logrus.Print("TodoApp Started")
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
+	<-quit
+
+	logrus.Print("TodoApp Stopped")
+
+	if err := srv.Shutdown(context.Background()); err != nil {
+		logrus.Errorf("error occured on server shutting down: %s", err.Error())
+	}
+	if err := db.Close(); err != nil {
+		logrus.Errorf("error occured on db connection close: %s", err.Error())
 	}
 }
 
