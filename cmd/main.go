@@ -1,27 +1,44 @@
 package main
 
 import (
-	"log"
+	"os"
 	todo "todo_app"
 	"todo_app/pkg/handler"
 	"todo_app/pkg/repository"
 	"todo_app/pkg/service"
 
+	"github.com/joho/godotenv"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
 func main() {
 	if err := initConfig(); err != nil {
-		log.Fatalf("error uncured initializing configs: %s", err.Error())
+		logrus.Fatalf("error uncured initializing configs: %s", err.Error())
 	}
 
-	repos := repository.NewRepository()
+	if err := godotenv.Load(); err != nil {
+		logrus.Fatalf("error loading env variables: %s", err.Error())
+	}
+
+	db, err := repository.NewPostgresDB(repository.Config{
+		Host:     viper.GetString("db.host"),
+		Port:     viper.GetString("db.port"),
+		Username: viper.GetString("db.username"),
+		DBName:   viper.GetString("db.dbname"),
+		SSLMode:  viper.GetString("db.sslmode"),
+		Password: os.Getenv("DB_PASSWORD"),
+	})
+	if err != nil {
+		logrus.Fatalf("failed to initialize db: %s", err.Error())
+	}
+	repos := repository.NewRepository(db)
 	services := service.NewService(repos)
 	handlers := handler.NewHandler(services)
 
 	srv := new(todo.Server)
-	if err := srv.Run(viper.GetString("8000"), handlers.InitRoutes()); err != nil {
-		log.Fatalf("error uncured while running http server: %s", err.Error())
+	if err := srv.Run(viper.GetString("5432"), handlers.InitRoutes()); err != nil {
+		logrus.Fatalf("error uncured while running http server: %s", err.Error())
 	}
 }
 
