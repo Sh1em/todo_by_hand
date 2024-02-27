@@ -32,7 +32,26 @@ func (h *Handler) createList(c *gin.Context) {
 
 }
 
+type getAllListsResponse struct {
+	Data []todo.TodoList `json:"data"`
+}
+
 func (h *Handler) getAllLists(c *gin.Context) {
+	userId, err := getUserId(c)
+	if err != nil {
+		NewErrorResponse(c, http.StatusUnauthorized, err.Error())
+		return
+	}
+	lists, err := h.services.TodoList.GetALL(userId)
+
+	if err != nil {
+		NewErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, getAllListsResponse{
+		Data: lists,
+	})
 
 }
 
