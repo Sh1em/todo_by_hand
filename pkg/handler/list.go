@@ -8,19 +8,18 @@ import (
 )
 
 func (h *Handler) createList(c *gin.Context) {
-	id, ok := c.Get(userCtx)
-	if !ok {
-		NewErrorResponse(c, http.StatusInternalServerError, "user id not found")
+	userId, err := getUserId(c)
+	if err != nil {
+		NewErrorResponse(c, http.StatusUnauthorized, err.Error())
 		return
 	}
-
 	var input todo.TodoList
 	if err := c.BindJSON(&input); err != nil {
 		NewErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	id, err := h.services.TodoList.Create(id.(int), input)
+	id, err := h.services.TodoList.Create(userId, input)
 
 	if err != nil {
 		NewErrorResponse(c, http.StatusInternalServerError, err.Error())
