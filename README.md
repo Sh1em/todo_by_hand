@@ -1,20 +1,13 @@
-- Работа с фреймворком <a href="https://github.com/gin-gonic/gin">gin-gonic/gin</a>.
-- Подход Чистой Архитектуры в построении структуры приложения. Техника внедрения зависимости.
-- Работа с БД Postgres. Запуск из Docker. Генерация файлов миграций. 
-- Конфигурация приложения с помощью библиотеки <a href="https://github.com/spf13/viper">spf13/viper</a>. Работа с переменными окружения.
-- Работа с БД, используя библиотеку <a href="https://github.com/jmoiron/sqlx">sqlx</a>.
-- Регистрация и аутентификация. Работа с JWT. Middleware.
-- Написание SQL запросов.
-- Graceful Shutdown
-  
-### Для запуска приложения:
 
 ```
 make build && make run
 ```
 
-Если приложение запускается впервые, необходимо применить миграции к базе данных:
 docker run --name=todo-db -e POSTGRES_PASSWORD='qwerty' -p 5436:5432 -d --rm postgres
+migrate -path ./schema -database 'postgres://postgres:qwerty@0.0.0.0:5436/postgres?sslmode=disable' up    
+
+http://localhost:8000/swagger/index.html
+
 ```
 make migrate
 ```
